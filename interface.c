@@ -15,6 +15,7 @@ Interface interface_init()
     interface.options.title = "[?] Please select";
     interface.options.PS3mode = PS3_NUMBERING;
     interface.options.PS3 = ">";
+    interface.options.exit = false;
 
     interface.load = interface_load;
     interface.prompt = interface_prompt;
@@ -31,7 +32,7 @@ void interface_prompt(void (*callback)(char *, int), Options options, ...)
 {
     char *choice;
     char **choices = malloc(sizeof(char *));
-    int counter = 0, index;
+    int counter = 0, index, isExitOption = false;
     va_list args;
 
     if(choices == NULL) {
@@ -63,6 +64,17 @@ void interface_prompt(void (*callback)(char *, int), Options options, ...)
         }
     }
 
+    if(options.exit) {
+        if(options.PS3mode & PS3_BULLET_POINT) {
+            printf("%s quit\n", options.PS3);
+            counter++;
+        } else {
+            printf("0) quit\n");
+        }
+
+        isExitOption = true;
+    }
+
     va_end(args);
 
     const int LIMIT_STRING = (int)floor(log10(counter)) + 1;
@@ -80,6 +92,10 @@ void interface_prompt(void (*callback)(char *, int), Options options, ...)
         }
 
         index = _getInteger(&response[0]);
+        if(isExitOption && index == 0) {
+            _garbageCollector(&choices, counter + 1);
+            return;
+        }
     } while(index < 1 || index > counter);
 
     callback(choices[index - 1], index); // cast char[] to char*

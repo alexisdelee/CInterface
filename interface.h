@@ -5,12 +5,16 @@
 #define PS3_BULLET_POINT 0x01
 #define PS3_NUMBERING 0x02
 
+#define true 1
+#define false 0
+
 typedef struct Options Options;
 struct Options
 {
     char *title;
     char *PS3;
     int PS3mode;
+    int exit;
 };
 
 typedef struct Interface Interface;
