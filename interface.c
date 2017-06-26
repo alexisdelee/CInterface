@@ -6,22 +6,61 @@
 #include <errno.h>
 #include <math.h>
 
-#include "select.h"
+#include "interface.h"
 
-void select(void (*callback)(char *, int), char *title, ...)
+Interface interface_init()
+{
+    Interface interface;
+
+    interface.options.title = "[?] Please select";
+    interface.options.PS3mode = PS3_NUMBERING;
+    interface.options.PS3 = ">";
+
+    interface.load = interface_load;
+    interface.prompt = interface_prompt;
+
+    return interface;
+}
+
+void interface_load(Options *options, char *configPath)
+{
+    // FILE *configFile;
+}
+
+void interface_prompt(void (*callback)(char *, int), Options options, ...)
 {
     char *choice;
     char **choices = malloc(sizeof(char *));
     int counter = 0, index;
     va_list args;
 
-    va_start(args, title);
+    if(choices == NULL) {
+        printf("Exception: error with malloc\n");
+        exit(-1);
+    }
 
-    printf("%s\n", title);
+    va_start(args, options);
+
+    printf("%s\n", options.title);
     while((choice = va_arg(args, char *))) {
-        choices[counter] = choice;
-        printf("%d) %s\n", ++counter, choice);
-        choices = realloc(choices, sizeof(char *) * counter);
+        if((choices[counter] = malloc(sizeof(char) * 501)) == NULL) {
+            printf("Exception: error with malloc\n");
+            exit(-1);
+        } else {
+            sprintf(choices[counter], "%s", choice);
+        }
+
+        if(options.PS3mode & PS3_BULLET_POINT) {
+            printf("%s %s\n", options.PS3, choice);
+            counter++;
+        } else {
+            printf("%d) %s\n", ++counter, choice);
+        }
+
+        if((choices = realloc(choices, sizeof(char *) * (counter + 1))) == NULL) {
+            printf("Exception: error with malloc\n");
+            exit(-1);
+        }
     }
 
     va_end(args);
