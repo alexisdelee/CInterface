@@ -71,10 +71,14 @@ void interface_prompt(void (*callback)(char *, int), Options options, ...)
     printf("\n");
     do {
         printf("#? ");
-        fgets(response, LIMIT_STRING + 1, stdin);
+        fgets(response, 101, stdin);
         fflush(stdin); // clean stdin
 
         _trim(&response[0]);
+        if(strlen(response) > LIMIT_STRING) {
+            continue;
+        }
+
         index = _getInteger(&response[0]);
     } while(index < 1 || index > counter);
 

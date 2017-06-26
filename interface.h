@@ -9,8 +9,8 @@ typedef struct Options Options;
 struct Options
 {
     char *title;
-    int PS3mode;
     char *PS3;
+    int PS3mode;
 };
 
 typedef struct Interface Interface;
