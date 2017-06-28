@@ -29,8 +29,5 @@ Interface interface_init();
 void interface_load(Options *, char *);
 void interface_prompt(void (*callback)(char *, int), Options, ...);
 void interface_free(Options *);
-void _trim(char *);
-int _getInteger(char *);
-void _garbageCollector(char ***, int);
 
 #endif // INTERFACE_H_INCLUDED

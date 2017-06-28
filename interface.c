@@ -14,6 +14,10 @@
     #define OS_Windows true
 #endif
 
+void _trim(char *);
+int _getInteger(char *);
+void _garbageCollector(char ***, int);
+
 Interface interface_init()
 {
     Interface interface;
