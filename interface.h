@@ -14,7 +14,7 @@ struct Options
     char *title;
     char *PS3;
     int PS3mode;
-    int exit;
+    int quit;
 };
 
 typedef struct Interface Interface;
@@ -28,6 +28,7 @@ struct Interface
 Interface interface_init();
 void interface_load(Options *, char *);
 void interface_prompt(void (*callback)(char *, int), Options, ...);
+void interface_free(Options *);
 void _trim(char *);
 int _getInteger(char *);
 void _garbageCollector(char ***, int);

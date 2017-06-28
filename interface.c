@@ -8,6 +8,12 @@
 
 #include "interface.h"
 
+#ifdef __unix__
+    #define OS_Windows false
+#elif defined(_WIN32) || defined(WIN32)
+    #define OS_Windows true
+#endif
+
 Interface interface_init()
 {
     Interface interface;
@@ -15,7 +21,7 @@ Interface interface_init()
     interface.options.title = "[?] Please select";
     interface.options.PS3mode = PS3_NUMBERING;
     interface.options.PS3 = ">";
-    interface.options.exit = false;
+    interface.options.quit = false;
 
     interface.load = interface_load;
     interface.prompt = interface_prompt;
@@ -25,7 +31,56 @@ Interface interface_init()
 
 void interface_load(Options *options, char *configPath)
 {
-    // FILE *configFile;
+    FILE *configFile = fopen(configPath, "r");
+    char line[501], *command = NULL;
+    int delimiter;
+
+    if(configFile == NULL) {
+        printf("Exception: error with the configuration file\n");
+        return;
+    }
+
+    while(fgets(line, 501, configFile)) {
+        _trim(&line[0]); // \r or \n for Mac, Unix and Windows
+        if(OS_Windows) {
+            _trim(&line[0]); // \n for Windows
+        }
+
+        if((delimiter = strcspn(line, "=")) == strlen(line)) {
+            continue;
+        }
+
+        command = malloc(sizeof(char) * (delimiter + 1));
+        if(command == NULL) {
+            printf("Exception: error with malloc\n");
+            exit(-1);
+        } else {
+            strncpy(command, line, delimiter);
+        }
+
+        if(!strcmp(command, "title")) {
+            options->title = strdup(line + delimiter + 1);
+        } else if(!strcmp(command, "PS3mode")) {
+            if(!strcmp(line + delimiter + 1, "BULLET_POINT")) {
+                options->PS3mode = PS3_BULLET_POINT;
+            } else if(!strcmp(line + delimiter + 1, "PS3_NUMBERING")) {
+                options->PS3mode = PS3_NUMBERING;
+            }
+        } else if(!strcmp(command, "PS3") && options->PS3mode == PS3_BULLET_POINT) {
+            options->PS3 = strdup(line + delimiter + 1);
+        } else if(!strcmp(command, "quit")) {
+            if(!strcmp(line + delimiter + 1, "false")) {
+                options->quit = false;
+            } else if(!strcmp(line + delimiter + 1, "true")) {
+                options->quit = true;
+            }
+        }
+
+        free(command);
+        command = NULL;
+    }
+
+    fclose(configFile);
 }
 
 void interface_prompt(void (*callback)(char *, int), Options options, ...)
@@ -64,7 +119,7 @@ void interface_prompt(void (*callback)(char *, int), Options options, ...)
         }
     }
 
-    if(options.exit) {
+    if(options.quit) {
         if(options.PS3mode & PS3_BULLET_POINT) {
             printf("%s quit\n", options.PS3);
             counter++;
@@ -91,15 +146,21 @@ void interface_prompt(void (*callback)(char *, int), Options options, ...)
             continue;
         }
 
-        index = _getInteger(&response[0]);
+        index = _getInteger(&response[0]); // cast char[] to char *
         if(isExitOption && index == 0) {
             _garbageCollector(&choices, counter + 1);
             return;
         }
     } while(index < 1 || index > counter);
 
-    callback(choices[index - 1], index); // cast char[] to char*
+    callback(choices[index - 1], index);
     _garbageCollector(&choices, counter + 1);
+}
+
+void interface_free(Options *options)
+{
+    free(options->title);
+    free(options->PS3);
 }
 
 void _trim(char *value)

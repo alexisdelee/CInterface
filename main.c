@@ -9,9 +9,10 @@ int main(int argc, char **argv)
 {
     Interface interface = interface_init();
 
-    // interface.load(&interface.options, "conf.json");
-    interface.options.exit = true;
-    interface.prompt(displayFunc, interface.options, "one", "two", "three", NULL);
+    interface.load(&interface.options, "conf.ini");
+    interface.prompt(displayFunc, interface.options, "oh yes, it's so true", "na, bullshit", NULL);
+
+    interface_free(&interface.options);
 
     return 0;
 }
