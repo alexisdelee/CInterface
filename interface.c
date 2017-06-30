@@ -14,17 +14,20 @@
     #define OS_Windows true
 #endif
 
+// private functions
+
 void _trim(char *);
 int _getInteger(char *);
 void _garbageCollector(char ***, int);
+void _free(Options *);
 
 Interface interface_init()
 {
     Interface interface;
 
     interface.options.title = "[?] Please select";
-    interface.options.PS3mode = PS3_NUMBERING;
-    interface.options.PS3 = ">";
+    interface.options.labelMode = LABEL_NUMBERING;
+    interface.options.label = ">";
     interface.options.quit = false;
 
     interface.load = interface_load;
@@ -60,18 +63,19 @@ void interface_load(Options *options, char *configPath)
             exit(-1);
         } else {
             strncpy(command, line, delimiter);
+            command[delimiter] = '\0';
         }
 
         if(!strcmp(command, "title")) {
             options->title = strdup(line + delimiter + 1);
-        } else if(!strcmp(command, "PS3mode")) {
-            if(!strcmp(line + delimiter + 1, "BULLET_POINT")) {
-                options->PS3mode = PS3_BULLET_POINT;
-            } else if(!strcmp(line + delimiter + 1, "PS3_NUMBERING")) {
-                options->PS3mode = PS3_NUMBERING;
+        } else if(!strcmp(command, "labelMode")) {
+            if(!strcmp(line + delimiter + 1, "LABEL_BULLET_POINT")) {
+                options->labelMode = LABEL_BULLET_POINT;
+            } else if(!strcmp(line + delimiter + 1, "LABEL_NUMBERING")) {
+                options->labelMode = LABEL_NUMBERING;
             }
-        } else if(!strcmp(command, "PS3") && options->PS3mode == PS3_BULLET_POINT) {
-            options->PS3 = strdup(line + delimiter + 1);
+        } else if(!strcmp(command, "label") && options->labelMode == LABEL_BULLET_POINT) {
+            options->label = strdup(line + delimiter + 1);
         } else if(!strcmp(command, "quit")) {
             if(!strcmp(line + delimiter + 1, "false")) {
                 options->quit = false;
@@ -87,7 +91,7 @@ void interface_load(Options *options, char *configPath)
     fclose(configFile);
 }
 
-void interface_prompt(void (*callback)(char *, int), Options options, ...)
+void interface_prompt(void (*callback)(char *, int), Options *options, ...)
 {
     char *choice;
     char **choices = malloc(sizeof(char *));
@@ -101,7 +105,7 @@ void interface_prompt(void (*callback)(char *, int), Options options, ...)
 
     va_start(args, options);
 
-    printf("%s\n", options.title);
+    printf("%s\n", options->title);
     while((choice = va_arg(args, char *))) {
         if((choices[counter] = malloc(sizeof(char) * 501)) == NULL) {
             printf("Exception: error with malloc\n");
@@ -110,8 +114,8 @@ void interface_prompt(void (*callback)(char *, int), Options options, ...)
             sprintf(choices[counter], "%s", choice);
         }
 
-        if(options.PS3mode & PS3_BULLET_POINT) {
-            printf("%s %s\n", options.PS3, choice);
+        if(options->labelMode & LABEL_BULLET_POINT) {
+            printf("%s %s\n", options->label, choice);
             counter++;
         } else {
             printf("%d) %s\n", ++counter, choice);
@@ -123,9 +127,9 @@ void interface_prompt(void (*callback)(char *, int), Options options, ...)
         }
     }
 
-    if(options.quit) {
-        if(options.PS3mode & PS3_BULLET_POINT) {
-            printf("%s quit\n", options.PS3);
+    if(options->quit) {
+        if(options->labelMode & LABEL_BULLET_POINT) {
+            printf("%s quit\n", options->label);
             counter++;
         } else {
             printf("0) quit\n");
@@ -159,12 +163,13 @@ void interface_prompt(void (*callback)(char *, int), Options options, ...)
 
     callback(choices[index - 1], index);
     _garbageCollector(&choices, counter + 1);
+    _free(options);
 }
 
-void interface_free(Options *options)
+void _free(Options *options)
 {
     free(options->title);
-    free(options->PS3);
+    free(options->label);
 }
 
 void _trim(char *value)
